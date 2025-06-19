@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  email String? @unique
+  name String?
+  emailVerified DateTime?
+  image String?
+  hashedPassword String?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  favoriteIds String[] @db.ObjectId @default([])
+
+  accounts Account[]
+  listings Listing[]
+  reservations Reservation[]
+  payments Payment[]
+}
+
+model Account {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  type String
+  provider String
+  providerAccountId String
+  refresh_token String? @db.String
+  access_token String? @db.String
+  expires_at Int? 
+  token_type String?
+  scope String?
+  id_token String? @db.String
+  session_state String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])// chi dinh 2 thuoc tinh lam khoa duy nhat khong ton tai 1 cap khoa tung tu 
+}
+
+model Listing{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  title String
+  description String
+  imageSrc String[]
+  createAt DateTime @default(now())
+  category String
+  roomCount Int
+  bathroomCount Int
+  guestCount Int
+  locationValue String
+  userId String @db.ObjectId//nguoi so huu 
+  price Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Reservation {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  listingId String @db.ObjectId
+  startDate DateTime 
+  endDate DateTime
+  totalPrice Int
+  status ReservationStatus @default(PENDING)
+  createAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String  @db.ObjectId
+  ReservationId  String @db.ObjectId   // vnp_TxnRef
+  amount         Float    // Đơn vị: VND
+  orderInfo      String   // vnp_OrderInfo
+  bankCode       String   // vnp_BankCode
+  payDate        String   // vnp_PayDate (yyyyMMddHHmmss)
+  transactionNo  String   @unique // vnp_TransactionNo
+  cardType       String   // vnp_CardType
+  status         String   // SUCCESS | FAILED
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
