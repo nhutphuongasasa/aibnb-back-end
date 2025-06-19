@@ -1,13 +1,13 @@
 services:
   - type: web
-    name: express-backend
-    env: node
+    name: airbnb-backend
+    env: docker
+    region: oregon
     plan: free
-    region: singapore
-    buildCommand: npm install && npm run build
-    startCommand: node dist/server.js
+    branch: main
+    dockerfilePath: ./Dockerfile
+    rootDir: .
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 8080
+      - key: DATABASE_URL
+        value: mongodb+srv://phuongbt3232:5nKRvUps4ncQwKlD@cluster0.0y674.mongodb.net/test
+
