@@ -8,7 +8,7 @@ export const setupGoogleStrategy = () => {
         clientID: process.env.GOOGLE_CLIENT_ID! as string,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET! as string,
         // callbackURL: `https://aibnb-back-end-5.onrender.com/api/auth/callback/google`
-        callbackURL: "https://aibnb-back-end-5.onrender.com/api/auth/callback/google"
+        callbackURL: `${process.env.SERVER_URL}/api/auth/callback/google`
 
     },async(accessToken, refreshToken, profile, cb) => {
         const userExisting = await prisma.user.findUnique({

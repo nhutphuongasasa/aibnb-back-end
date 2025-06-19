@@ -99,7 +99,7 @@ app.post('/api/create-qr', async (req: Request, res: Response, next: NextFunctio
       vnp_TxnRef: reservation.id,
       vnp_OrderInfo: `Thanh toan don hang `,
       vnp_OrderType: ProductCode.Other,
-      vnp_ReturnUrl: 'http://localhost:3000', 
+      vnp_ReturnUrl: process.env.SERVER_URL, 
       vnp_Locale: VnpLocale.VN,
   });
 
