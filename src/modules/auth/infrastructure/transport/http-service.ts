@@ -58,7 +58,7 @@ export class AuthHttpService{
     
             res.send(`
                 <script>
-                  window.opener.postMessage({ success: true, user: ${JSON.stringify(user)} }, ${process.env.CLIENT_URL});
+                  window.opener.postMessage({ success: true, user: ${JSON.stringify(user)} }, "https://airbnb-front-end-7mkz.vercel.app/");
                   window.close();
                 </script>
             `);
