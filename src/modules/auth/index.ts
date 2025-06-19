@@ -19,7 +19,7 @@ export const setupAuthModule = () => {
         passport.authenticate('google', { failureRedirect: 'login', session: false}),
         httpService.LoginWithGoogle.bind(httpService)
     )
-    router.get("/github",
+    router.get("/callback/github",
         passport.authenticate("github", {scope: ['profile', 'email'], prompt:'select_account'}),
         httpService.LoginWithGithub.bind(httpService)
     )
