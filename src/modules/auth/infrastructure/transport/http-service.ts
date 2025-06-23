@@ -85,7 +85,7 @@ export class AuthHttpService{
     
             res.send(`
                 <script>
-                  window.opener.postMessage({ success: true, user: ${JSON.stringify(user)} }, "http://localhost:3000");
+                  window.opener.postMessage({ success: true, user: ${JSON.stringify(user)} }, "${process.env.CLIENT_URL}");
                   window.close();
                 </script>
             `);
@@ -114,7 +114,7 @@ export class AuthHttpService{
           });
       
           // Redirect về frontend sau khi login GitHub thành công
-          res.redirect("http://localhost:3000/");
+          res.redirect(`${process.env.CLIENT_URL}`);
         } catch (error) {
           next(error);
         }
