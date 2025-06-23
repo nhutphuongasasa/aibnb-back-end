@@ -7,7 +7,7 @@ export const setupGoogleStrategy = () => {
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID! as string,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET! as string,
-        callbackURL: `${process.env.CLIENT_URL}/api/auth/callback/google`
+        callbackURL: `${process.env.SERVER_URL}/api/auth/callback/google`
     },async(accessToken, refreshToken, profile, cb) => {
         const userExisting = await prisma.user.findUnique({
             where: {
@@ -45,7 +45,7 @@ export const setupGithubStrategy = () => {
     passport.use(new GithubStrategy({
       clientID: process.env.GITHUB_ID!,
       clientSecret: process.env.GITHUB_SECRET!,
-      callbackURL: `${process.env.CLIENT_URL}/api/auth/callback/github`
+      callbackURL: `${process.env.SERVER_URL}/api/auth/callback/github`
     }, async (accessToken, refreshToken, profile, cb) => {
       const email = profile.emails?.[0]?.value || `${profile.username}@github.com`; // fallback email
       const name = profile.displayName || profile.username;
