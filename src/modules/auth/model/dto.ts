@@ -18,7 +18,7 @@ export type RegisterDTO = z.infer<typeof RegisterSchema>
 export const LoginResponseSchema = z.object({
     email: z.string().email(),
     name: z.string(),
-    image: z.string().url()
+    image: z.string().url().nullable().optional()
 })
 
 export type LoginResponse = z.infer<typeof LoginResponseSchema>

@@ -24,7 +24,7 @@ export type UserCondDTO = z.infer<typeof UserCondDTO>
 export const UserResponseSchema = z.object({
     name: z.string(),
     email: z.string().email("Invalid email address"),
-    image: z.string().url().optional(),
+    image: z.string().url().nullable().optional(),
     favoriteIds: z.array(z.string())
 })
 
@@ -34,7 +34,7 @@ export const HostResponseSchema = z.object({
     user: z.string(),
     name: z.string(),
     email: z.string().email("Invalid email address"),
-    image: z.string().url().optional(),
+    image: z.string().url().nullable().optional(),
 })
 
 export type HOstResponse = z.infer<typeof HostResponseSchema>

@@ -1,0 +1,1619 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Laptop Store API",
+    "version": "1.0.0",
+    "description": "API documentation for Laptop Store"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "paths": {
+    "/api/auth/google": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng nhập với Google (chuyển hướng đến Google OAuth)"
+      }
+    },
+    "/api/auth/github": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng nhập với GitHub (chuyển hướng đến GitHub OAuth)"
+      }
+    },
+    "/api/auth/callback/google": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Xử lý callback từ Google OAuth",
+        "description": "API xử lý callback từ Google sau khi người dùng đăng nhập bằng Google OAuth. Nếu người dùng là mới, hệ thống sẽ tự động tạo tài khoản.\nHệ thống cũng sẽ tạo accessToken và refreshToken, sau đó gửi về frontend thông qua `window.opener.postMessage` trong một script HTML.\n",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Mã xác thực được Google trả về sau khi người dùng đăng nhập thành công"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đăng nhập thành công và phản hồi HTML để gửi user + token về frontend",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "<script>\n  window.opener.postMessage({ success: true, user: {id: \"...\", email: \"...\"} }, \"http://localhost:3000\");\n  window.close();\n</script>\n"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Redirect về trang đăng nhập nếu xác thực thất bại"
+          },
+          "500": {
+            "description": "Lỗi server khi xử lý thông tin người dùng từ Google"
+          }
+        }
+      }
+    },
+    "/api/auth/callback/github": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Xử lý callback từ GitHub OAuth",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect sau khi xác thực thành công",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "accessToken và refreshToken được lưu trong cookie"
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng nhập bằng email và mật khẩu",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Đăng nhập thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "image": {
+                      "type": "string",
+                      "format": "uri",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy người dùng"
+          },
+          "500": {
+            "description": "Email hoặc mật khẩu không đúng"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng ký tài khoản mới",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Đăng ký thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "image": {
+                      "type": "string",
+                      "format": "uri",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ"
+          },
+          "409": {
+            "description": "Email đã tồn tại"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng xuất",
+        "responses": {
+          "200": {
+            "description": "Đăng xuất thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Logged out successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi server"
+          }
+        }
+      }
+    },
+    "/api/listing/me": {
+      "get": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Lấy danh sách listing của chính người dùng (current user)",
+        "responses": {
+          "200": {
+            "description": "Danh sách listing của người dùng hiện tại",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "imageSrc": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "format": "uri"
+                        }
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "roomCount": {
+                        "type": "integer"
+                      },
+                      "bathroomCount": {
+                        "type": "integer"
+                      },
+                      "guestCount": {
+                        "type": "integer"
+                      },
+                      "locationValue": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "price": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực người dùng"
+          }
+        }
+      }
+    },
+    "/api/listing/{id}": {
+      "get": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Lấy chi tiết một listing theo ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID của listing cần lấy",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thông tin chi tiết của listing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "imageSrc": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "roomCount": {
+                      "type": "integer"
+                    },
+                    "bathroomCount": {
+                      "type": "integer"
+                    },
+                    "guestCount": {
+                      "type": "integer"
+                    },
+                    "locationValue": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "price": {
+                      "type": "number"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy listing"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Xoá một listing theo ID",
+        "description": "Xoá một listing thuộc quyền sở hữu của người dùng hiện tại",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID của listing cần xoá",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách listing mới của người dùng sau khi xoá",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "imageSrc": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "roomCount": {
+                        "type": "integer"
+                      },
+                      "bathroomCount": {
+                        "type": "integer"
+                      },
+                      "guestCount": {
+                        "type": "integer"
+                      },
+                      "locationValue": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "price": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy listing hoặc không thuộc quyền sở hữu người dùng"
+          }
+        }
+      }
+    },
+    "/api/listing": {
+      "post": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Tạo một listing mới",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "description",
+                  "category",
+                  "roomCount",
+                  "bathroomCount",
+                  "guestCount",
+                  "location",
+                  "price",
+                  "userId"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Biệt thự sang trọng Đà Lạt"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "View đồi thông, đầy đủ tiện nghi"
+                  },
+                  "imageSrc": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "example": [
+                      "https://example.com/image1.jpg"
+                    ]
+                  },
+                  "category": {
+                    "type": "string",
+                    "example": "Villa"
+                  },
+                  "roomCount": {
+                    "type": "integer",
+                    "example": 3
+                  },
+                  "bathroomCount": {
+                    "type": "integer",
+                    "example": 2
+                  },
+                  "guestCount": {
+                    "type": "integer",
+                    "example": 6
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "string",
+                        "example": "VN-63"
+                      },
+                      "label": {
+                        "type": "string",
+                        "example": "Lâm Đồng"
+                      },
+                      "flag": {
+                        "type": "string",
+                        "example": "🇻🇳"
+                      },
+                      "latlng": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "example": [
+                          11.9404,
+                          108.4583
+                        ]
+                      },
+                      "region": {
+                        "type": "string",
+                        "example": "Tây Nguyên"
+                      }
+                    }
+                  },
+                  "price": {
+                    "type": "number",
+                    "example": 120
+                  },
+                  "userId": {
+                    "type": "string",
+                    "example": "64f2bcbcb20bd28a64a3c123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Listing đã được tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "imageSrc": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "roomCount": {
+                      "type": "integer"
+                    },
+                    "bathroomCount": {
+                      "type": "integer"
+                    },
+                    "guestCount": {
+                      "type": "integer"
+                    },
+                    "locationValue": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "price": {
+                      "type": "number"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy người dùng"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Lấy danh sách tất cả listing theo điều kiện lọc",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID của người dùng (người tạo listing)"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Danh mục của listing"
+          },
+          {
+            "name": "roomCount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Số phòng ngủ tối thiểu"
+          },
+          {
+            "name": "bathroomCount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Số phòng tắm tối thiểu"
+          },
+          {
+            "name": "guestCount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Số lượng khách tối thiểu"
+          },
+          {
+            "name": "localVale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Địa điểm cụ thể"
+          },
+          {
+            "name": "price",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Mức giá tối thiểu"
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Ngày bắt đầu dự kiến thuê"
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Ngày kết thúc dự kiến thuê"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách listing phù hợp",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "imageSrc": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "roomCount": {
+                        "type": "integer"
+                      },
+                      "bathroomCount": {
+                        "type": "integer"
+                      },
+                      "guestCount": {
+                        "type": "integer"
+                      },
+                      "locationValue": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "user": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string",
+                            "format": "email"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/create-qr": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Tạo link thanh toán VNPay cho đơn đặt phòng",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "listingId",
+                  "startDate",
+                  "endDate",
+                  "totalPrice"
+                ],
+                "properties": {
+                  "listingId": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "totalPrice": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công, trả về URL thanh toán",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paymentUrl": {
+                      "type": "string",
+                      "example": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Không có token truy cập hợp lệ"
+          },
+          "500": {
+            "description": "Lỗi server"
+          }
+        }
+      }
+    },
+    "/api/vnpay_ipn": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Xử lý callback từ VNPay sau thanh toán",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "vnp_TxnRef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vnp_Amount",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vnp_ResponseCode",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vnp_TransactionNo",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vnp_BankCode",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vnp_CardType",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vnp_PayDate",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vnp_SecureHash",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kết quả xử lý IPN VNPay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "RspCode": {
+                      "type": "string"
+                    },
+                    "Message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reservations": {
+      "get": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Lấy danh sách các đặt phòng",
+        "responses": {
+          "200": {
+            "description": "Danh sách các đặt phòng",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "listingId": {
+                        "type": "string"
+                      },
+                      "startDate": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "endDate": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "totalPrice": {
+                        "type": "number"
+                      },
+                      "createAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "listing": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "imageSrc": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "createAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "roomCount": {
+                            "type": "integer"
+                          },
+                          "bathroomCount": {
+                            "type": "integer"
+                          },
+                          "guestCount": {
+                            "type": "integer"
+                          },
+                          "locationValue": {
+                            "type": "string"
+                          },
+                          "userId": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy dữ liệu"
+          }
+        }
+      }
+    },
+    "/api/reservation/{id}": {
+      "get": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Lấy chi tiết một reservation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "ID của reservation",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chi tiết reservation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "listingId": {
+                      "type": "string"
+                    },
+                    "startDate": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "endDate": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "totalPrice": {
+                      "type": "number"
+                    },
+                    "createAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "listing": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "imageSrc": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "createAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "category": {
+                          "type": "string"
+                        },
+                        "roomCount": {
+                          "type": "integer"
+                        },
+                        "bathroomCount": {
+                          "type": "integer"
+                        },
+                        "guestCount": {
+                          "type": "integer"
+                        },
+                        "locationValue": {
+                          "type": "string"
+                        },
+                        "userId": {
+                          "type": "string"
+                        },
+                        "price": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy reservation"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Xoá reservation theo id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "ID của reservation cần xoá",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Xoá reservation thành công",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "successful"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Người dùng không hợp lệ hoặc không có quyền xoá"
+          },
+          "404": {
+            "description": "Không tìm thấy reservation hoặc user"
+          }
+        }
+      }
+    },
+    "/api/reservation": {
+      "post": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Tạo mới một reservation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "userId",
+                  "listingId",
+                  "startDate",
+                  "endDate",
+                  "totalPrice"
+                ],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "description": "ID của người dùng"
+                  },
+                  "listingId": {
+                    "type": "string",
+                    "description": "ID của listing"
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "totalPrice": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reservation được tạo thành công"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ"
+          },
+          "404": {
+            "description": "Không tìm thấy user hoặc listing"
+          }
+        }
+      }
+    },
+    "/api/user/profile": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Lấy thông tin hồ sơ người dùng",
+        "responses": {
+          "200": {
+            "description": "Thông tin người dùng",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "Nguyễn Văn A"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "example@gmail.com"
+                    },
+                    "image": {
+                      "type": "string",
+                      "format": "uri",
+                      "nullable": true,
+                      "example": "https://example.com/avatar.jpg"
+                    },
+                    "favoriteIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "abc123",
+                        "def456"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc không có token"
+          }
+        }
+      }
+    },
+    "/api/user": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Tạo người dùng mới",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Nguyễn Văn A"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "example@gmail.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "abc123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tạo người dùng thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "Nguyễn Văn A"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "example@gmail.com"
+                    },
+                    "image": {
+                      "type": "string",
+                      "format": "uri",
+                      "nullable": true,
+                      "example": "https://example.com/avatar.jpg"
+                    },
+                    "favoriteIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "abc123",
+                        "def456"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email đã tồn tại"
+          }
+        }
+      }
+    },
+    "/api/user/favorites/{id}": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Thêm listing vào danh sách yêu thích",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID của listing cần thêm"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thêm thành công, trả về thông tin người dùng đã cập nhật",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "example@gmail.com"
+                    },
+                    "name": {
+                      "type": "string",
+                      "example": "Nguyễn Văn A"
+                    },
+                    "image": {
+                      "type": "string",
+                      "format": "uri",
+                      "nullable": true
+                    },
+                    "favoriteIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "listing1",
+                        "listing2"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy người dùng"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Xoá một listing khỏi danh sách yêu thích",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID của listing cần xoá khỏi favorites"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Xoá thành công, trả về người dùng đã cập nhật",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "example@gmail.com"
+                    },
+                    "name": {
+                      "type": "string",
+                      "example": "Nguyễn Văn A"
+                    },
+                    "image": {
+                      "type": "string",
+                      "format": "uri",
+                      "nullable": true
+                    },
+                    "favoriteIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "listing1",
+                        "listing3"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy người dùng hoặc dữ liệu không hợp lệ"
+          }
+        }
+      }
+    },
+    "/api/user/favorites": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Lấy danh sách các listing yêu thích của người dùng",
+        "responses": {
+          "200": {
+            "description": "Danh sách listing đã yêu thích",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "imageSrc": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "example": [
+                          "https://example.com/image1.jpg",
+                          "https://example.com/image2.jpg"
+                        ]
+                      },
+                      "createAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "roomCount": {
+                        "type": "integer"
+                      },
+                      "bathroomCount": {
+                        "type": "integer"
+                      },
+                      "guestCount": {
+                        "type": "integer"
+                      },
+                      "locationValue": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "price": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy người dùng hoặc dữ liệu không hợp lệ"
+          }
+        }
+      }
+    }
+  },
+  "components": {},
+  "tags": []
+}
