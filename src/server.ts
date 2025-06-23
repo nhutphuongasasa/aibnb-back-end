@@ -48,7 +48,7 @@ app.use("/api/reservation", setupReservationModule())
 
 app.use(errorHandler)
 
-const PORT = 8080
+const PORT = process.env.PORT || 3000
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
